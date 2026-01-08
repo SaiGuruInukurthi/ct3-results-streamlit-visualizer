@@ -147,11 +147,15 @@ def parse_html_file_content(content: str) -> list[dict]:
     records.sort(key=lambda x: x['Total'], reverse=True)
     
     # Assign ranks (handle ties with min method)
+    # When there are ties, all get the same rank, and next rank skips
+    # E.g., if 3 people tie for rank 1, next person gets rank 4
     current_rank = 1
+    prev_total = None
     for i, record in enumerate(records):
-        if i > 0 and record['Total'] < records[i-1]['Total']:
+        if prev_total is not None and record['Total'] < prev_total:
             current_rank = i + 1
         record['Rank'] = current_rank
+        prev_total = record['Total']
     
     return records
 
