@@ -109,16 +109,16 @@ if selected_campus != 'All Campuses':
     filtered_df = filtered_df[filtered_df['Campus'] == selected_campus]
     # Recalculate ranks for the selected campus
     filtered_df = filtered_df.sort_values('Total', ascending=False).reset_index(drop=True)
-    filtered_df['Rank'] = filtered_df.groupby('Total', sort=False).ngroup(ascending=False) + 1
     # Handle ties properly with min rank method
-    rank_map = {}
     current_rank = 1
-    for i, (idx, row) in enumerate(filtered_df.iterrows()):
-        total = row['Total']
-        if total not in rank_map:
-            rank_map[total] = current_rank
-            current_rank = i + 2
-        filtered_df.at[idx, 'Rank'] = rank_map[total]
+    prev_total = None
+    ranks = []
+    for i, total in enumerate(filtered_df['Total']):
+        if prev_total is not None and total < prev_total:
+            current_rank = i + 1
+        ranks.append(current_rank)
+        prev_total = total
+    filtered_df['Rank'] = ranks
 
 # Search filter
 if search_term:
