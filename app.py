@@ -33,7 +33,7 @@ def load_data_from_json():
         with open(JSON_FILE, 'r', encoding='utf-8') as f:
             records = json.load(f)
         df = pd.DataFrame(records)
-        df = df[['Rank', 'Name', 'RollNo', 'OverallPseudocode', 'OverallCoding', 'OverallDailyTest', 'Total']]
+        df = df[['Rank', 'Name', 'RollNo', 'Campus', 'OverallPseudocode', 'OverallCoding', 'OverallDailyTest', 'Total']]
         return df
     except Exception as e:
         return pd.DataFrame()
@@ -46,7 +46,7 @@ def load_data_from_html(file_content: str):
     try:
         records = parse_html_file_content(file_content)
         df = pd.DataFrame(records)
-        df = df[['Rank', 'Name', 'RollNo', 'OverallPseudocode', 'OverallCoding', 'OverallDailyTest', 'Total']]
+        df = df[['Rank', 'Name', 'RollNo', 'Campus', 'OverallPseudocode', 'OverallCoding', 'OverallDailyTest', 'Total']]
         return df
     except Exception as e:
         st.error(f"Error parsing HTML: {e}")
@@ -74,6 +74,11 @@ if df.empty:
 # Sidebar - Filters and Options
 st.sidebar.header("🔧 Options")
 
+# Campus filter
+st.sidebar.subheader("🏫 Campus Filter")
+campuses = ['All Campuses'] + sorted(df['Campus'].unique().tolist())
+selected_campus = st.sidebar.selectbox("Select Campus", campuses)
+
 # Search
 search_term = st.sidebar.text_input("🔍 Search by Name or Roll No", "")
 
@@ -98,6 +103,22 @@ min_total = st.sidebar.slider(
 
 # Apply filters
 filtered_df = df.copy()
+
+# Campus filter
+if selected_campus != 'All Campuses':
+    filtered_df = filtered_df[filtered_df['Campus'] == selected_campus]
+    # Recalculate ranks for the selected campus
+    filtered_df = filtered_df.sort_values('Total', ascending=False).reset_index(drop=True)
+    filtered_df['Rank'] = filtered_df.groupby('Total', sort=False).ngroup(ascending=False) + 1
+    # Handle ties properly with min rank method
+    rank_map = {}
+    current_rank = 1
+    for i, (idx, row) in enumerate(filtered_df.iterrows()):
+        total = row['Total']
+        if total not in rank_map:
+            rank_map[total] = current_rank
+            current_rank = i + 2
+        filtered_df.at[idx, 'Rank'] = rank_map[total]
 
 # Search filter
 if search_term:
@@ -128,6 +149,27 @@ with col4:
 
 st.markdown("---")
 
+# Campus breakdown
+st.subheader("🏫 Campus-wise Student Count")
+campus_counts = df['Campus'].value_counts().sort_index()
+
+# Display campus counts in columns
+num_campuses = len(campus_counts)
+cols_per_row = 4
+num_rows = (num_campuses + cols_per_row - 1) // cols_per_row
+
+for row in range(num_rows):
+    cols = st.columns(cols_per_row)
+    for col_idx in range(cols_per_row):
+        campus_idx = row * cols_per_row + col_idx
+        if campus_idx < num_campuses:
+            campus = campus_counts.index[campus_idx]
+            count = campus_counts.iloc[campus_idx]
+            with cols[col_idx]:
+                st.metric(f"📍 {campus}", count)
+
+st.markdown("---")
+
 # Display the dataframe
 st.subheader(f"📋 Student Scores ({len(filtered_df)} records)")
 
@@ -145,6 +187,10 @@ display_df = display_df.rename(columns={
     'OverallCoding': 'Coding',
     'OverallDailyTest': 'Daily Test'
 })
+
+# Reorder columns to put Campus after Roll No
+column_order = ['Rank', 'Name', 'Roll No', 'Campus', 'Pseudocode', 'Coding', 'Daily Test', 'Total']
+display_df = display_df[column_order]
 
 st.dataframe(
     display_df,

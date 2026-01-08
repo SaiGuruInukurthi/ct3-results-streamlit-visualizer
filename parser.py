@@ -128,6 +128,7 @@ def parse_html_file_content(content: str) -> list[dict]:
         record = {
             'Name': core_data.get('Name', 'Unknown'),
             'RollNo': core_data.get('regdNo', roll_no),
+            'Campus': core_data.get('Campus', 'Unknown'),
             'OverallPseudocode': clean_score(overall_data.get('OverallPseudocode', 0)),
             'OverallCoding': clean_score(overall_data.get('OverallCoding', 0)),
             'OverallDailyTest': clean_score(overall_data.get('OverallDaily', 0)),
