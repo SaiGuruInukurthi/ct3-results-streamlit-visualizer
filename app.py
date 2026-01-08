@@ -82,6 +82,12 @@ selected_campus = st.sidebar.selectbox("Select Campus", campuses)
 # Search
 search_term = st.sidebar.text_input("🔍 Search by Name or Roll No", "")
 
+# Custom filter for multiple students
+st.sidebar.subheader("📝 Custom Filter")
+st.sidebar.markdown("Enter Roll Numbers (one per line or comma-separated)")
+custom_filter = st.sidebar.text_area("Roll Numbers", height=100, placeholder="2023003611\n2023001493\nor: 2023003611, 2023001493")
+enable_custom_filter = st.sidebar.checkbox("Apply Custom Filter")
+
 # Sorting options
 st.sidebar.subheader("📈 Sorting")
 sort_column = st.sidebar.selectbox(
@@ -119,6 +125,24 @@ if selected_campus != 'All Campuses':
         ranks.append(current_rank)
         prev_total = total
     filtered_df['Rank'] = ranks
+
+# Custom filter (if enabled, override other filters except campus)
+if enable_custom_filter and custom_filter.strip():
+    # Parse the input - support both newline and comma separated
+    roll_numbers = []
+    # Split by newlines first
+    lines = custom_filter.strip().split('\n')
+    for line in lines:
+        # Also split by comma within each line
+        parts = [p.strip() for p in line.split(',') if p.strip()]
+        roll_numbers.extend(parts)
+    
+    if roll_numbers:
+        # Filter to only include these roll numbers
+        filtered_df = filtered_df[filtered_df['RollNo'].astype(str).isin(roll_numbers)]
+        st.sidebar.success(f"✅ Filtering {len(roll_numbers)} roll numbers")
+    else:
+        st.sidebar.warning("⚠️ No valid roll numbers entered")
 
 # Search filter
 if search_term:
