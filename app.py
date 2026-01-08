@@ -138,9 +138,12 @@ if enable_custom_filter and custom_filter.strip():
         roll_numbers.extend(parts)
     
     if roll_numbers:
-        # Filter to only include these roll numbers
-        filtered_df = filtered_df[filtered_df['RollNo'].astype(str).isin(roll_numbers)]
-        st.sidebar.success(f"✅ Filtering {len(roll_numbers)} roll numbers")
+        # Filter to include roll numbers that contain any of the entered values (partial match)
+        mask = filtered_df['RollNo'].astype(str).str.contains('|'.join(roll_numbers), case=False, regex=True, na=False)
+        filtered_df = filtered_df[mask]
+        st.sidebar.success(f"✅ Filtering by {len(roll_numbers)} roll number(s)")
+        if filtered_df.empty:
+            st.sidebar.error("❌ No matches found")
     else:
         st.sidebar.warning("⚠️ No valid roll numbers entered")
 
