@@ -149,6 +149,27 @@ with col4:
 
 st.markdown("---")
 
+# Campus breakdown
+st.subheader("🏫 Campus-wise Student Count")
+campus_counts = df['Campus'].value_counts().sort_index()
+
+# Display campus counts in columns
+num_campuses = len(campus_counts)
+cols_per_row = 4
+num_rows = (num_campuses + cols_per_row - 1) // cols_per_row
+
+for row in range(num_rows):
+    cols = st.columns(cols_per_row)
+    for col_idx in range(cols_per_row):
+        campus_idx = row * cols_per_row + col_idx
+        if campus_idx < num_campuses:
+            campus = campus_counts.index[campus_idx]
+            count = campus_counts.iloc[campus_idx]
+            with cols[col_idx]:
+                st.metric(f"📍 {campus}", count)
+
+st.markdown("---")
+
 # Display the dataframe
 st.subheader(f"📋 Student Scores ({len(filtered_df)} records)")
 
